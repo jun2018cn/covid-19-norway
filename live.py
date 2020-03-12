@@ -71,18 +71,11 @@ def get_state_changes(result):
         "totals": result["totals"],
         "cases": [],
     }
-    total_changes = {}
-
-    confirmed_diff = result["totals"]["confirmed"] - data["totals"]["confirmed"]
-    dead_diff = result["totals"]["dead"] - data["totals"]["dead"]
-    recovered_diff = result["totals"]["recovered"] - data["totals"]["recovered"]
-
-    if confirmed_diff != 0:
-        total_changes["confirmed"] = confirmed_diff
-    if dead_diff != 0:
-        total_changes["dead"] = dead_diff
-    if recovered_diff != 0:
-        total_changes["recovered"] = recovered_diff
+    total_changes = {
+        "confirmed": result["totals"]["confirmed"] - data["totals"]["confirmed"],
+        "dead": result["totals"]["dead"] - data["totals"]["dead"],
+        "recovered": result["totals"]["recovered"] - data["totals"]["recovered"],
+    }
 
     changes["totals"]["changes"] = total_changes
 
@@ -130,14 +123,10 @@ def get_state_changes(result):
         ):
             continue
 
-        if confirmed_per_1k_capita_diff != 0:
-            municipality_changes["confirmedPer1kCapita"] = confirmed_per_1k_capita_diff
-        if confirmed_diff != 0:
-            municipality_changes["confirmed"] = confirmed_diff
-        if dead_diff != 0:
-            municipality_changes["dead"] = dead_diff
-        if recovered_diff != 0:
-            municipality_changes["recovered"] = recovered_diff
+        municipality_changes["confirmedPer1kCapita"] = confirmed_per_1k_capita_diff
+        municipality_changes["confirmed"] = confirmed_diff
+        municipality_changes["dead"] = dead_diff
+        municipality_changes["recovered"] = recovered_diff
 
         municipality["changes"] = municipality_changes
         changes["cases"].append(municipality)
@@ -151,7 +140,13 @@ def format_number_text(data):
         if key == "confirmedPer1kCapita":
             # TODO: use this for something?
             continue
-        arrow = "▲" if value > 0 else "▼"
+        if value > 0:
+            arrow = "▲"
+        elif value < 0:
+            arrow = "▼"
+        else:
+            arrow = "▆"
+
         value = str("+" + str(value) if value > 0 else value)
         text += (
             "\n_"
@@ -243,14 +238,14 @@ while True:
         print("-" * 32)
         if changes is None:
             print("No changes since last check!")
-            set_state(data)
+            # set_state(data)
             time.sleep(SLEEP_DURATION)
             continue
 
         print("Oh no, found changes in the data...")
         slack_message = format_slack_message(changes)
-        send_slack_message(slack_message)
-        set_state(data)
+        # send_slack_message(slack_message)
+        # set_state(data)
     except Exception as e:
         print("Error whilst processing")
         traceback.print_exc()

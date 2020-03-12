@@ -3,6 +3,7 @@ import json
 import time
 import pickle
 import urllib3
+import traceback
 from covid import get_current_data, LOCALE_MAPPING
 from datetime import datetime
 from pprint import pprint
@@ -101,13 +102,23 @@ def get_state_changes(result):
                 None,
             )
 
-        confirmed_per_1k_capita_diff = (
-            municipality["confirmedPer1kCapita"]
-            - stored_municipality["confirmedPer1kCapita"]
-        )
-        confirmed_diff = municipality["confirmed"] - stored_municipality["confirmed"]
-        dead_diff = municipality["dead"] - stored_municipality["dead"]
-        recovered_diff = municipality["recovered"] - stored_municipality["recovered"]
+        if stored_municipality is None:
+            # New municipality!
+            confirmed_diff = municipality["confirmed"]
+            dead_diff = municipality["dead"]
+            recovered_diff = municipality["recovered"]
+        else:
+            confirmed_per_1k_capita_diff = (
+                municipality["confirmedPer1kCapita"]
+                - stored_municipality["confirmedPer1kCapita"]
+            )
+            confirmed_diff = (
+                municipality["confirmed"] - stored_municipality["confirmed"]
+            )
+            dead_diff = municipality["dead"] - stored_municipality["dead"]
+            recovered_diff = (
+                municipality["recovered"] - stored_municipality["recovered"]
+            )
 
         municipality_changes = {}
 
@@ -212,13 +223,24 @@ if not os.path.isfile(STATE_FILE):
 
 
 while True:
-    data = get_current_data()
     try:
+        print("=" * 32)
+        print("Fetching data...")
+        data = get_current_data()
         changes = get_state_changes(data)
 
-        for key, value in data["totals"].items():
+        print("-" * 32)
+        print("Current:")
+        for key, value in changes["totals"].items():
+            if key != "changes":
+                print(LOCALE_MAPPING[key], "=", value)
+
+        print("-" * 32)
+        print("Differences:")
+        for key, value in changes["totals"]["changes"].items():
             print(LOCALE_MAPPING[key], "=", value)
 
+        print("-" * 32)
         if changes is None:
             print("No changes since last check!")
             set_state(data)
@@ -229,7 +251,10 @@ while True:
         slack_message = format_slack_message(changes)
         send_slack_message(slack_message)
         set_state(data)
-    except:
+    except Exception as e:
+        print("Error whilst processing")
+        traceback.print_exc()
         pass
 
+    print("Sleeping for", SLEEP_DURATION, "seconds")
     time.sleep(SLEEP_DURATION)

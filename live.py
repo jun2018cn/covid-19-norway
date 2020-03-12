@@ -231,14 +231,8 @@ while True:
 
         print("-" * 32)
         print("Current:")
-        for key, value in changes["totals"].items():
-            if key != "changes":
-                print(LOCALE_MAPPING[key], "=", value)
-
-        print("-" * 32)
-        print("Differences:")
-        for key, value in changes["totals"]["changes"].items():
-            print(LOCALE_MAPPING[key], "=", value)
+        for key, value in data["totals"].items():
+            print(LOCALE_MAPPING.get(key, key), "=", value)
 
         print("-" * 32)
         if changes is None:
@@ -246,6 +240,11 @@ while True:
             set_state(data)
             time.sleep(SLEEP_DURATION)
             continue
+
+        print("-" * 32)
+        print("Differences:")
+        for key, value in changes["totals"]["changes"].items():
+            print(LOCALE_MAPPING.get(key, key), "=", value)
 
         print("Oh no, found changes in the data...")
         slack_message = format_slack_message(changes)

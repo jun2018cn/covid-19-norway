@@ -95,8 +95,11 @@ def get_state_changes(result):
                 None,
             )
 
+        municipality_changes = {"is_new": False}
+
         if stored_municipality is None:
             # New municipality!
+            municipality_changes["is_new"] = True
             confirmed_diff = municipality["confirmed"]
             dead_diff = municipality["dead"]
             recovered_diff = municipality["recovered"]
@@ -112,8 +115,6 @@ def get_state_changes(result):
             recovered_diff = (
                 municipality["recovered"] - stored_municipality["recovered"]
             )
-
-        municipality_changes = {}
 
         if (
             confirmed_per_1k_capita_diff == 0
@@ -137,7 +138,7 @@ def get_state_changes(result):
 def format_number_text(data):
     text = ""
     for key, value in data["changes"].items():
-        if key == "confirmedPer1kCapita":
+        if key in ["confirmedPer1kCapita", "is_new"]:
             # TODO: use this for something?
             continue
         if value > 0:
@@ -145,7 +146,7 @@ def format_number_text(data):
         elif value < 0:
             arrow = "▼"
         else:
-            arrow = "▆"
+            arrow = ""
 
         value = str("+" + str(value) if value > 0 else value)
         text += (
@@ -185,6 +186,10 @@ def format_slack_message(changes):
 
     for municipality in changes["cases"]:
         text = "*" + municipality["name"] + " (" + municipality["parent"] + ")*"
+
+        if municipality["changes"]["is_new"]:
+            text += " :new:"
+
         text += format_number_text(municipality)
         slack_message["blocks"].extend(
             [
@@ -244,7 +249,7 @@ while True:
 
         print("Oh no, found changes in the data...")
         slack_message = format_slack_message(changes)
-        # send_slack_message(slack_message)
+        send_slack_message(slack_message)
         # set_state(data)
     except Exception as e:
         print("Error whilst processing")

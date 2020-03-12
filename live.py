@@ -178,7 +178,7 @@ def format_slack_message(changes):
     )
 
     for municipality in changes["cases"]:
-        text = f"*{municipality['name']} ({municipality['parent']})*"
+        text = "*" + municipality["name"] + " (" + municipality["parent"] + ")*"
         text += format_number_text(municipality)
         slack_message["blocks"].extend(
             [

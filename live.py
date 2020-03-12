@@ -210,22 +210,25 @@ if not os.path.isfile(STATE_FILE):
     # Set an empty state
     set_state({})
 
-result = get_current_data()
 
 while True:
+    data = get_current_data()
     try:
-        changes = get_state_changes(result)
+        changes = get_state_changes(data)
+
+        for key, value in data["totals"].items():
+            print(LOCALE_MAPPING[key], "=", value)
 
         if changes is None:
             print("No changes since last check!")
-            set_state(result)
+            set_state(data)
             time.sleep(SLEEP_DURATION)
             continue
 
         print("Oh no, found changes in the data...")
         slack_message = format_slack_message(changes)
         send_slack_message(slack_message)
-        set_state(result)
+        set_state(data)
     except:
         pass
 

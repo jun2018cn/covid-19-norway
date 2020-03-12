@@ -156,7 +156,6 @@ def format_number_text(data):
             + str(data[key])
             + "* | Endring: *"
             + arrow
-            + "*"
             + str(value)
             + "*"
         )
@@ -168,7 +167,7 @@ def format_slack_message(changes):
     slack_message = INITIAL_SLACK_MESSAGE.copy()
 
     text = (
-        "Tid siden siste Slack melding: "
+        "Tid siden siste status oppdatering: "
         + str(datetime.utcnow() - changes["last_updated"]).split(".", 2)[0]
     )
     slack_message["blocks"].append(

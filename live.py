@@ -142,9 +142,9 @@ def format_number_text(data):
             # TODO: use this for something?
             continue
         if value > 0:
-            arrow = "▲"
+            arrow = "▲ "
         elif value < 0:
-            arrow = "▼"
+            arrow = "▼ "
         else:
             arrow = ""
 
@@ -152,12 +152,12 @@ def format_number_text(data):
         text += (
             "\n_"
             + LOCALE_MAPPING[key]
-            + "_: "
-            + arrow
-            + " *"
-            + str(value)
-            + "* | Nåværende: *"
+            + "_: *"
             + str(data[key])
+            + "* | Endring: *"
+            + arrow
+            + "*"
+            + str(value)
             + "*"
         )
 

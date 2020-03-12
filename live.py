@@ -243,14 +243,14 @@ while True:
         print("-" * 32)
         if changes is None:
             print("No changes since last check!")
-            # set_state(data)
+            set_state(data)
             time.sleep(SLEEP_DURATION)
             continue
 
         print("Oh no, found changes in the data...")
         slack_message = format_slack_message(changes)
         send_slack_message(slack_message)
-        # set_state(data)
+        set_state(data)
     except Exception as e:
         print("Error whilst processing")
         traceback.print_exc()

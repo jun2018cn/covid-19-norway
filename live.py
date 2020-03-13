@@ -166,10 +166,7 @@ def format_number_text(data):
 def format_slack_message(changes):
     slack_message = INITIAL_SLACK_MESSAGE.copy()
 
-    text = (
-        "Tid siden siste status oppdatering: "
-        + str(datetime.utcnow() - changes["last_updated"]).split(".", 2)[0]
-    )
+    text = "Tidligere status oppdatering: " + str(changes["last_updated"].isoformat())
     slack_message["blocks"].append(
         {"type": "context", "elements": [{"text": text, "type": "mrkdwn",}],},
     )
@@ -184,7 +181,10 @@ def format_slack_message(changes):
     )
 
     for municipality in changes["cases"]:
-        text = "*" + municipality["name"] + " (" + municipality["parent"] + ")*"
+        text = "*" + municipality["name"]
+        if "parent" in municipality:
+            text += " (" + municipality["parent"] + ")"
+        text += "*"
 
         if municipality["changes"]["is_new"]:
             text += " :new:"
@@ -200,6 +200,17 @@ def format_slack_message(changes):
 
 
 def send_slack_message(slack_message):
+    if len(slack_message["blocks"]) > 50:
+        print(
+            "Limit of 50 slack message blocks... splitting up the blocks and sending them seperate"
+        )
+        blocks = slack_message["blocks"]
+        blocks_list = [blocks[x : x + 50] for x in range(0, len(blocks), 50)]
+        for inner_blocks in blocks_list:
+            slack_message["blocks"] = inner_blocks
+            send_slack_message(slack_message)
+        return
+
     http = urllib3.PoolManager()
     r = http.request(
         "POST",
@@ -236,7 +247,6 @@ while True:
         print("-" * 32)
         if changes is None:
             print("No changes since last check!")
-            set_state(data)
             time.sleep(SLEEP_DURATION)
             continue
 

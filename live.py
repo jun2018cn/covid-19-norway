@@ -21,12 +21,14 @@ INITIAL_SLACK_MESSAGE = {
     "channel": "#covid-19",
     "blocks": [
         {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": ":biohazard_sign: *COVID-19 OPPDATERING* :biohazard_sign:",
-            },
-        }
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": ":biohazard_sign: *COVID-19 OPPDATERING* :biohazard_sign:",
+                }
+            ],
+        },
     ],
 }
 
@@ -84,13 +86,13 @@ def get_state_changes(result):
             stored_municipality = next(
                 (m for m in data["cases"] if m["name"] == "Ukjent"), None,
             )
-
         else:
             stored_municipality = next(
                 (
                     m
                     for m in data["cases"]
-                    if m["municipalityCode"] == municipality["municipalityCode"]
+                    if m["name"] != "Ukjent"
+                    and m["municipalityCode"] == municipality["municipalityCode"]
                 ),
                 None,
             )
@@ -135,6 +137,13 @@ def get_state_changes(result):
     return changes
 
 
+def generate_text_block(text):
+    return [
+        {"type": "divider"},
+        {"type": "section", "text": {"type": "mrkdwn", "text": text},},
+    ]
+
+
 def format_number_text(data):
     text = ""
     for key, value in data["changes"].items():
@@ -173,12 +182,7 @@ def format_slack_message(changes):
 
     text = "*:flag-no: Landsbasis :flag-no:*"
     text += format_number_text(changes["totals"])
-    slack_message["blocks"].extend(
-        [
-            {"type": "divider"},
-            {"type": "section", "text": {"type": "mrkdwn", "text": text},},
-        ]
-    )
+    slack_message["blocks"].extend(generate_text_block(text))
 
     for municipality in changes["cases"]:
         text = "*" + municipality["name"]
@@ -190,12 +194,7 @@ def format_slack_message(changes):
             text += " :new:"
 
         text += format_number_text(municipality)
-        slack_message["blocks"].extend(
-            [
-                {"type": "divider"},
-                {"type": "section", "text": {"type": "mrkdwn", "text": text}},
-            ]
-        )
+        slack_message["blocks"].extend(generate_text_block(text))
     return slack_message
 
 
